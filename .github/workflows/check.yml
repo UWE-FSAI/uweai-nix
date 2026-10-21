@@ -1,0 +1,31 @@
+# Evaluates every machine, image and dev shell on each push and pull request.
+# Evaluation catches nearly every mistake a config change can make and takes
+# a few minutes, so it fits the free tier (public repositories are
+# unmetered). Nothing is built here: building ROS and desktops would take
+# hours on a hosted runner.
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      # Some ARM packages (the Jetson, vm-aarch64) can only be evaluated
+      # after building a small ARM derivation; QEMU lets this x86 runner do
+      # that, as ads.base.emulateAarch64 does on members' machines.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            accept-flake-config = true
+            extra-platforms = aarch64-linux
+      - name: Evaluate everything
+        run: ./scripts/check.sh

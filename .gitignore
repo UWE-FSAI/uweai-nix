@@ -1,0 +1,7 @@
+result
+result-*
+*.qcow2
+*.raw
+.direnv/
+
+.DS_Store
